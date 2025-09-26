@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Vigas de Concreto - NBR 6118:2023</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .custom-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        /* Estilos para o Modal */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-active {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .modal-content {
+            transition: transform 0.25s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Calculadora de Vigas Retangulares</h1>
+            <p class="text-md text-slate-600 mt-2">Dimensionamento à Flexão e ao Cortante (ELU) conforme ABNT NBR 6118:2023</p>
+        </header>
+
+        <div class="space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Coluna de Entradas -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-6 border-b pb-4">Parâmetros de Entrada</h2>
+                    <form id="beam-form" class="space-y-6">
+                        
+                        <div>
+                            <h3 class="text-lg font-medium text-blue-600 mb-3">1. Ambiente e Materiais</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="caa" class="block text-sm font-medium text-slate-700 mb-1">Classe de Agressividade (CAA)</label>
+                                    <select id="caa" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 custom-select">
+                                        <option value="1">I - Rural / Submersa</option>
+                                        <option value="2" selected>II - Urbano</option>
+                                        <option value="3">III - Marinho / Industrial</option>
+                                        <option value="4">IV - Industrial (agressivo)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="fck" class="block text-sm font-medium text-slate-700 mb-1">Classe do Concreto (fck)</label>
+                                    <select id="fck" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 custom-select">
+                                        <option value="20">C20</option>
+                                        <option value="25" selected>C25</option>
+                                        <option value="30">C30</option>
+                                        <option value="35">C35</option>
+                                        <option value="40">C40</option>
+                                        <option value="45">C45</option>
+                                        <option value="50">C50</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-blue-600 mb-3">2. Geometria e Esforços</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="bw" class="block text-sm font-medium text-slate-700 mb-1">Largura da Viga (b<sub>w</sub>) [cm]</label>
+                                    <input type="number" id="bw" value="15" step="1" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="h" class="block text-sm font-medium text-slate-700 mb-1">Altura da Viga (h) [cm]</label>
+                                    <input type="number" id="h" value="40" step="1" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="msd" class="block text-sm font-medium text-slate-700 mb-1">Momento de Cálculo (M<sub>Sd</sub>) [kNm]</label>
+                                    <input type="number" id="msd" value="60" step="1" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="vsd" class="block text-sm font-medium text-slate-700 mb-1">Força Cortante (V<sub>Sd</sub>) [kN]</label>
+                                    <input type="number" id="vsd" value="75" step="1" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium text-blue-600 mb-3">3. Detalhamento da Armadura</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="phi_e" class="block text-sm font-medium text-slate-700 mb-1">Ø do Estribo [mm]</label>
+                                    <input type="number" id="phi_e" value="6.3" step="0.1" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="phi_l" class="block text-sm font-medium text-slate-700 mb-1">Ø da Armadura Long. [mm]</label>
+                                    <input type="number" id="phi_l" value="16.0" step="0.1" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
+                                Calcular e Gerar Memorial
+                            </button>
+                        </div>
+                    </form>
+                    <div id="error-message" class="mt-4 text-red-600 font-medium hidden"></div>
+                </div>
+
+                <!-- Coluna de Resultados -->
+                <div class="space-y-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-semibold mb-4 border-b pb-4">Resultados Parciais</h2>
+                        <div id="partial-results" class="text-sm space-y-3">
+                            <p class="text-slate-500">Aguardando cálculo...</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800 text-white p-6 rounded-lg shadow-md">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-600 pb-4">
+                            <h2 class="text-2xl font-semibold">Memorial de Cálculo</h2>
+                            <button id="copy-button" class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 transition-colors">Copiar</button>
+                        </div>
+                        <pre id="memorial-output" class="text-xs whitespace-pre-wrap font-mono">Aguardando cálculo...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção Gráfica -->
+            <div class="bg-white p-6 rounded-lg shadow-md mt-8">
+                <h2 class="text-2xl font-semibold mb-4 border-b pb-4">Representação Gráfica (Clique para ampliar)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="text-center">
+                        <h3 class="font-semibold text-slate-700 mb-2">Seção e Armadura</h3>
+                        <div id="image-container" class="flex justify-center items-center min-h-[300px] bg-slate-50 rounded-md p-2">
+                            <div id="loader" class="loader hidden"></div>
+                            <img id="beam-image" src="https://placehold.co/400x300/e2e8f0/64748b?text=Aguardando+Cálculo" alt="Seção da viga" class="max-w-full h-auto rounded-md cursor-pointer hover:opacity-80 transition-opacity">
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-semibold text-slate-700 mb-2">Diagramas de Deformação e Tensão</h3>
+                        <div id="stress-image-container" class="flex justify-center items-center min-h-[300px] bg-slate-50 rounded-md p-2">
+                            <div id="stress-loader" class="loader hidden"></div>
+                            <img id="stress-image" src="https://placehold.co/400x300/e2e8f0/64748b?text=Aguardando+Cálculo" alt="Diagramas de tensão e deformação" class="max-w-full h-auto rounded-md cursor-pointer hover:opacity-80 transition-opacity">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal -->
+    <div id="imageModal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 opacity-0 pointer-events-none">
+        <div class="modal-content bg-white p-4 rounded-lg shadow-xl max-w-4xl max-h-full w-auto h-auto transform scale-95">
+            <button id="closeModal" class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold hover:bg-opacity-75">&times;</button>
+            <img id="modalImage" src="" alt="Imagem ampliada" class="max-w-full max-h-[85vh] object-contain">
+        </div>
+    </div>
+
+
+    <script>
+        // --- DATA MAPPING FROM NBR 6118:2023 ---
+        const nbrData = {
+            cobrimento: { // Tabela 7.2
+                '1': 25, // CAA I, Viga/Pilar
+                '2': 30, // CAA II, Viga/Pilar
+                '3': 40, // CAA III, Viga/Pilar
+                '4': 50, // CAA IV, Viga/Pilar
+            },
+            fckMin: { // Tabela 7.1
+                '1': 20,
+                '2': 25,
+                '3': 30,
+                '4': 40,
+            },
+            armaduraMin: { // Tabela 17.3 (rho_min %)
+                20: 0.15, 25: 0.15, 30: 0.15,
+                35: 0.164, 40: 0.179, 45: 0.194, 50: 0.208
+            }
+        };
+
+        // --- DOM ELEMENTS ---
+        const form = document.getElementById('beam-form');
+        const caaSelect = document.getElementById('caa');
+        const fckSelect = document.getElementById('fck');
+        const partialResultsDiv = document.getElementById('partial-results');
+        const memorialOutput = document.getElementById('memorial-output');
+        const errorMessageDiv = document.getElementById('error-message');
+        const copyButton = document.getElementById('copy-button');
+        const imageContainer = document.getElementById('image-container');
+        const loader = document.getElementById('loader');
+        const beamImage = document.getElementById('beam-image');
+        const stressImageContainer = document.getElementById('stress-image-container');
+        const stressLoader = document.getElementById('stress-loader');
+        const stressImage = document.getElementById('stress-image');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const closeModalButton = document.getElementById('closeModal');
+        
+        // --- EVENT LISTENERS ---
+        caaSelect.addEventListener('change', () => {
+            const selectedCaa = caaSelect.value;
+            const minFck = nbrData.fckMin[selectedCaa];
+            
+            if (parseInt(fckSelect.value) < minFck) {
+                fckSelect.value = minFck;
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            calculate();
+        });
+
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(memorialOutput.innerText);
+            copyButton.innerText = "Copiado!";
+            setTimeout(() => { copyButton.innerText = "Copiar"; }, 2000);
+        });
+
+        // Modal Listeners
+        beamImage.addEventListener('click', () => openModal(beamImage.src));
+        stressImage.addEventListener('click', () => openModal(stressImage.src));
+        closeModalButton.addEventListener('click', closeModal);
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) {
+                closeModal();
+            }
+        });
+        
+        // --- MODAL FUNCTIONS ---
+        function openModal(src) {
+            if (src.includes('placehold.co')) return; // Don't open placeholder
+            modalImage.src = src;
+            imageModal.classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+            imageModal.querySelector('.modal-content').classList.remove('scale-95');
+        }
+
+        function closeModal() {
+            imageModal.classList.add('opacity-0', 'pointer-events-none');
+            document.body.classList.remove('modal-active');
+            imageModal.querySelector('.modal-content').classList.add('scale-95');
+        }
+
+        // --- CALCULATION LOGIC ---
+        async function calculate() {
+            clearResults();
+
+            // 1. Get Inputs
+            const inputs = getInputs();
+            if (!validateInputs(inputs)) return;
+            
+            // 2. Initial Parameters
+            const params = calculateInitialParams(inputs);
+            displayPartialResult(1, "Parâmetros Iniciais", `
+                <p><strong>Coef. Concreto (γ<sub>c</sub>):</strong> ${params.gamma_c}</p>
+                <p><strong>Coef. Aço (γ<sub>s</sub>):</strong> ${params.gamma_s}</p>
+                <p><strong>f<sub>cd</sub>:</strong> ${params.fcd_mpa.toFixed(2)} MPa</p>
+                <p><strong>f<sub>yd</sub>:</strong> ${params.fyd_mpa.toFixed(2)} MPa</p>
+                <p><strong>Altura Útil (d):</strong> ${params.d.toFixed(2)} cm</p>
+            `);
+
+            // 3. Flexural Design
+            const flexure = calculateFlexure(inputs, params);
+            if (!flexure) return;
+            
+            const flexureHTML = `
+                <div class="space-y-3">
+                    <div>
+                        <p><strong>Momento Adimensional (k):</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">k = M_Sd / (α_c * f_cd * b_w * d²)</p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">k = ${(inputs.msd * 100).toFixed(2)} / (0.85 * ${(params.fcd_mpa / 10).toFixed(3)} * ${inputs.bw} * ${params.d.toFixed(2)}²)</p>
+                        <p class="pl-2"><strong>k = ${flexure.k.toFixed(4)}</strong></p>
+                    </div>
+                    <div>
+                        <p><strong>Posição da Linha Neutra (x):</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">x/d = [1 - √(1 - 2*k)] / λ</p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">x/d = [1 - √(1 - 2*${flexure.k.toFixed(4)})] / 0.8 = ${flexure.x_d_ratio.toFixed(4)}</p>
+                        <p class="pl-2">x = ${flexure.x_d_ratio.toFixed(4)} * ${params.d.toFixed(2)} = <strong>${flexure.x.toFixed(2)} cm</strong></p>
+                        <p class="font-semibold text-green-600 pl-2">Verificação Dutilidade: ${flexure.x_d_ratio.toFixed(3)} ≤ 0.45 (OK!)</p>
+                    </div>
+                    <div>
+                        <p><strong>Braço de Alavanca (z):</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">z = d * (1 - 0.5 * λ * x/d)</p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">z = ${params.d.toFixed(2)} * (1 - 0.5 * 0.8 * ${flexure.x_d_ratio.toFixed(4)}) = <strong>${flexure.z.toFixed(2)} cm</strong></p>
+                    </div>
+                    <div>
+                        <p><strong>Área de Aço Calculada (A<sub>s,calc</sub>):</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">A_s = M_Sd / (z * f_yd)</p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">A_s = ${(inputs.msd * 100).toFixed(2)} / (${flexure.z.toFixed(2)} * ${(params.fyd_mpa/10).toFixed(2)}) = <strong>${flexure.As_calc.toFixed(2)} cm²</strong></p>
+                    </div>
+                </div>
+            `;
+            displayPartialResult(2, "Dimensionamento à Flexão", flexureHTML);
+            
+            // 4. Final Checks and Detailing
+            const checks = performChecks(inputs, flexure);
+            displayPartialResult(3, "Verificações (Arm. Longitudinal)", `
+                 <p><strong>A<sub>s,min</sub> (Tabela 17.3):</strong> ${checks.As_min.toFixed(2)} cm²</p>
+                 <p><strong>A<sub>s,max</sub> (4% A<sub>c</sub>):</strong> ${checks.As_max.toFixed(2)} cm²</p>
+                 <p class="font-semibold text-blue-700"><strong>Área de Aço Final (A<sub>s,nec</sub>):</strong> ${checks.As_nec.toFixed(2)} cm²</p>
+                 <hr class="my-2">
+                 <p class="font-bold text-lg"><strong>Resultado Flexão: ${checks.num_barras} Ø ${inputs.phi_l} mm</strong></p>
+                 <p>(A<sub>s,adotada</sub> = ${checks.As_adotada.toFixed(2)} cm²)</p>
+            `);
+
+            // 5. Shear Design
+            const shear = calculateShear(inputs, params);
+            if (!shear) return;
+             const shearHTML = `
+                <div class="space-y-3">
+                    <div>
+                        <p><strong>Verificação da Biela Comprimida (V<sub>Rd2</sub>):</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">V_Rd2 = 0.27 * (1 - fck/250) * f_cd * b_w * d</p>
+                        <p class="pl-2">V_Rd2 = <strong>${shear.VRd2.toFixed(2)} kN</strong></p>
+                        <p class="font-semibold ${shear.checkVRd2 ? 'text-green-600' : 'text-red-600'} pl-2">${inputs.vsd.toFixed(2)} kN ≤ ${shear.VRd2.toFixed(2)} kN (${shear.checkVRd2 ? 'OK!' : 'NÃO ATENDE!'})</p>
+                    </div>
+                    <div>
+                        <p><strong>Contribuição do Concreto (V<sub>c</sub>):</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">V_c = 0.6 * f_ctd * b_w * d</p>
+                        <p class="pl-2">V_c = <strong>${shear.Vc.toFixed(2)} kN</strong></p>
+                    </div>
+                    <div>
+                        <p><strong>Armadura Transversal Necessária (A<sub>sw</sub>/s):</strong></p>
+                         <p class="text-xs text-slate-500 pl-2 font-mono">(A_sw/s)_calc = (V_Sd - V_c) / (0.9 * d * f_ywd)</p>
+                        <p class="pl-2">(A_sw/s)_calc = <strong>${shear.Asw_s_calc.toFixed(4)} cm²/cm</strong></p>
+                        <p class="text-xs text-slate-500 pl-2 font-mono">(A_sw/s)_min = 0.2 * (f_ctm / f_yk) * b_w</p>
+                        <p class="pl-2">(A_sw/s)_min = <strong>${shear.Asw_s_min.toFixed(4)} cm²/cm</strong></p>
+                        <p class="font-semibold text-blue-700 pl-2"><strong>(A<sub>sw</sub>/s)<sub>nec</sub> = ${shear.Asw_s_nec.toFixed(4)} cm²/cm</strong></p>
+                    </div>
+                </div>
+            `;
+            displayPartialResult(4, "Dimensionamento ao Cortante", shearHTML);
+
+
+            // 6. Generate Memorial
+            const allResults = { ...inputs, ...params, ...flexure, ...checks, ...shear };
+            generateMemorial(allResults);
+
+            // 7. Generate Images
+            generateSectionImage(allResults);
+            generateStressStrainImage(allResults);
+        }
+
+        function getInputs() {
+            return {
+                caa: document.getElementById('caa').value,
+                fck: parseFloat(document.getElementById('fck').value),
+                bw: parseFloat(document.getElementById('bw').value),
+                h: parseFloat(document.getElementById('h').value),
+                msd: parseFloat(document.getElementById('msd').value),
+                vsd: parseFloat(document.getElementById('vsd').value),
+                phi_e: parseFloat(document.getElementById('phi_e').value),
+                phi_l: parseFloat(document.getElementById('phi_l').value),
+                fyk: 500.0, // Aço CA-50
+            };
+        }
+
+        function validateInputs(inputs) {
+            const minFck = nbrData.fckMin[inputs.caa];
+            if (inputs.fck < minFck) {
+                showError(`Para CAA ${inputs.caa}, a classe de concreto mínima é C${minFck} (Tabela 7.1).`);
+                return false;
+            }
+            if (inputs.bw < 12) {
+                 showError(`A largura da viga (b_w) não deve ser menor que 12 cm (Item 13.2.2).`);
+                 return false;
+            }
+            for (const key in inputs) {
+                if (isNaN(inputs[key]) || inputs[key] <= 0) {
+                    showError(`Por favor, preencha todos os campos com valores válidos e positivos.`);
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        function calculateInitialParams(inputs) {
+            const gamma_c = 1.4;
+            const gamma_s = 1.15;
+            const fcd_mpa = inputs.fck / gamma_c;
+            const fyd_mpa = inputs.fyk / gamma_s;
+            
+            const cobrimento = nbrData.cobrimento[inputs.caa] / 10; // cm
+            const d = inputs.h - cobrimento - (inputs.phi_e / 10) - (inputs.phi_l / 10 / 2);
+
+            return { gamma_c, gamma_s, fcd_mpa, fyd_mpa, d, cobrimento };
+        }
+
+        function calculateFlexure(inputs, params) {
+            const msd_kNcm = inputs.msd * 100;
+            const fcd_kN_cm2 = params.fcd_mpa / 10;
+            const alpha_c = 0.85; // Para fck <= 50 MPa
+            const lambda = 0.8;  // Para fck <= 50 MPa
+
+            const k = msd_kNcm / (alpha_c * fcd_kN_cm2 * inputs.bw * params.d ** 2);
+
+            if (k > 0.295) { // Limite para k que corresponde a x/d = 0.45
+                showError(`Erro: Momento excessivo (K=${k.toFixed(3)}). A viga necessita de armadura de compressão ou deve ser redimensionada. (x/d > 0.45)`);
+                return null;
+            }
+
+            const y = 1 - Math.sqrt(1 - 2 * k); // y = lambda * x/d
+            const x_d_ratio = y / lambda;
+            const x = x_d_ratio * params.d;
+            const z = params.d * (1 - 0.5 * y);
+            const fyd_kN_cm2 = params.fyd_mpa / 10;
+            const As_calc = msd_kNcm / (z * fyd_kN_cm2);
+
+            // Calculate steel strain for the diagram
+            const epsilon_c_lim = 0.0035; // Deformação última do concreto (Item 17.2.2)
+            const epsilon_s = epsilon_c_lim * ( (params.d - x) / x );
+
+
+            return { k, x, z, x_d_ratio, As_calc, epsilon_s };
+        }
+
+        function calculateShear(inputs, params) {
+            const { fck, bw } = inputs;
+            const { d, fcd_mpa, fyd_mpa, gamma_c } = params;
+            const vsd_kN = inputs.vsd;
+
+            // V_Rd2 (Item 17.4.2.1)
+            const alpha_v2 = 1 - (fck / 250);
+            const VRd2 = 0.27 * alpha_v2 * (fcd_mpa / 10) * bw * d; // em kN
+            const checkVRd2 = vsd_kN <= VRd2;
+            if (!checkVRd2) {
+                showError(`Erro: Força cortante maior que a resistência da biela (Vsd > VRd2). Aumente a seção de concreto.`);
+                return null;
+            }
+
+            // Vc (Item 17.4.2.2)
+            const fctm = 0.3 * Math.pow(fck, 2/3); // fct,m
+            const fctk_inf = 0.7 * fctm;
+            const fctd = fctk_inf / gamma_c;
+            const Vc0 = 0.6 * (fctd / 10) * bw * d; // em kN
+            const Vc = Vc0; // Simplificando para flexão simples
+
+            // Asw/s (Item 17.4.2.3)
+            const Vsw = vsd_kN - Vc;
+            let Asw_s_calc = 0;
+            if (Vsw > 0) {
+                 // Estribos a 90 graus, fywd = fyd
+                Asw_s_calc = Vsw / (0.9 * d * (fyd_mpa / 10)); // cm²/cm
+            }
+
+            // Asw/s,min (Item 17.4.1.1)
+            const rho_sw_min = 0.2 * (fctm / inputs.fyk);
+            const Asw_s_min = rho_sw_min * bw; // cm²/cm
+
+            const Asw_s_nec = Math.max(Asw_s_calc, Asw_s_min);
+
+            return { VRd2, checkVRd2, Vc, Vsw, Asw_s_calc, Asw_s_min, Asw_s_nec };
+        }
+        
+        function performChecks(inputs, flexure) {
+            const Ac = inputs.bw * inputs.h;
+            
+            // As_min (Tabela 17.3)
+            let rho_min = nbrData.armaduraMin[inputs.fck] || 0.15; // fallback
+            const As_min = (rho_min / 100) * Ac;
+
+            // As_max (Item 17.3.5.3)
+            const As_max = 0.04 * Ac;
+            
+            const As_nec = Math.max(flexure.As_calc, As_min);
+            
+            // Detailing
+            const area_barra_unitaria = Math.PI * (inputs.phi_l / 10 / 2) ** 2;
+            const num_barras = Math.ceil(As_nec / area_barra_unitaria);
+            const As_adotada = num_barras * area_barra_unitaria;
+
+            return { Ac, As_min, As_max, As_nec, num_barras, As_adotada };
+        }
+
+        function displayPartialResult(step, title, htmlContent) {
+            const section = document.createElement('div');
+            section.innerHTML = `
+                <h4 class="font-semibold text-md text-slate-800">${step}. ${title}</h4>
+                <div class="pl-4 mt-1 border-l-2 border-blue-200">${htmlContent}</div>
+            `;
+            partialResultsDiv.appendChild(section);
+        }
+
+        function generateMemorial(r) {
+            const memorialText = `
+-------------------------------------------------------
+MEMORIAL DE CÁLCULO - VIGA RETANGULAR (NBR 6118:2023)
+-------------------------------------------------------
+
+1. DADOS DE ENTRADA:
+   - Seção (bw x h): ${r.bw.toFixed(1)} cm x ${r.h.toFixed(1)} cm
+   - Momento de Cálculo (M_Sd): ${r.msd.toFixed(1)} kNm
+   - Cortante de Cálculo (V_Sd): ${r.vsd.toFixed(1)} kN
+   - Concreto (fck): C${r.fck} (${r.fck} MPa)
+   - Aço (fyk): CA-50 (500 MPa)
+   - Classe Agressividade (CAA): ${r.caa}
+   - Cobrimento (c_nom): ${(r.cobrimento * 10).toFixed(0)} mm
+
+2. PARÂMETROS DE CÁLCULO:
+   - Resistência de Cálculo Concreto (f_cd): ${r.fcd_mpa.toFixed(2)} MPa
+   - Resistência de Cálculo Aço (f_yd): ${r.fyd_mpa.toFixed(2)} MPa
+   - Altura Útil (d): ${r.d.toFixed(2)} cm
+
+3. DIMENSIONAMENTO À FLEXÃO (ELU):
+   - Posição da Linha Neutra (x): ${r.x.toFixed(2)} cm
+   - Relação (x/d): ${r.x_d_ratio.toFixed(3)} (<= 0.45, OK - Dútil)
+   - Área de Aço Calculada (As,calc): ${r.As_calc.toFixed(2)} cm²
+   - Armadura Mínima (As,min): ${r.As_min.toFixed(2)} cm²
+   - RESULTADO FLEXÃO: ${r.num_barras} Ø ${r.phi_l.toFixed(1)} mm (As,adotada = ${r.As_adotada.toFixed(2)} cm²)
+
+4. DIMENSIONAMENTO AO CORTANTE (ELU):
+   - Verif. Biela Comprimida (V_Rd2): ${r.VRd2.toFixed(2)} kN (OK)
+   - Parcela do Concreto (V_c): ${r.Vc.toFixed(2)} kN
+   - Armadura Transversal (Asw/s)nec: ${r.Asw_s_nec.toFixed(4)} cm²/cm
+
+-------------------------------------------------------
+            `;
+            memorialOutput.innerText = memorialText.trim();
+        }
+
+        async function generateSectionImage(r) {
+            loader.classList.remove('hidden');
+            beamImage.classList.add('hidden');
+
+            const prompt = `Create a scaled technical schematic of a concrete beam cross-section, maintaining the aspect ratio. The beam's width is ${r.bw} cm and its height is ${r.h} cm. The drawing style should be a clean blueprint with black lines on a white background. At the bottom, show ${r.num_barras} reinforcement bars of ${r.phi_l} mm diameter, drawn to scale within the section and arranged in a single layer. A stirrup of ${r.phi_e} mm diameter must surround the main bars. Add clear, professional dimension lines for the total width 'bw', total height 'h', and the concrete cover '${(r.cobrimento * 10).toFixed(0)} mm' on the side and bottom. The drawing must be precise and proportional, not stylized.`;
+
+            try {
+                const response = await fetchWithBackoff(prompt);
+                const result = await response.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                if (base64Data) {
+                    beamImage.src = `data:image/png;base64,${base64Data}`;
+                } else {
+                    throw new Error("Não foi possível gerar a imagem da seção. Resposta da API inválida.");
+                }
+            } catch (error) {
+                console.error("Section image generation error:", error);
+                beamImage.src = `https://placehold.co/400x250/fecaca/991b1b?text=Erro+ao+gerar+imagem`;
+                 showError("Ocorreu um erro ao gerar a imagem da seção.");
+            } finally {
+                 loader.classList.add('hidden');
+                 beamImage.classList.remove('hidden');
+            }
+        }
+        
+        async function generateStressStrainImage(r) {
+            stressLoader.classList.remove('hidden');
+            stressImage.classList.add('hidden');
+
+            const prompt = `Create a technical engineering drawing showing two diagrams side-by-side for a rectangular concrete beam section in the ultimate limit state (ULS), according to the simplified rectangular stress block method.
+Left Diagram (Strain Distribution): Draw the beam's rectangular cross-section outline. Show the neutral axis (NA) as a dashed line at a depth 'x' = ${r.x.toFixed(2)} cm from the top. Draw the linear strain diagram, labeling the maximum concrete strain at the top as εc = 3.5‰ and the steel strain at the bottom as εs = ${(r.epsilon_s * 1000).toFixed(2)}‰. Clearly mark the dimensions 'x' and 'd-x'.
+Right Diagram (Stress Distribution): Draw the identical beam cross-section. Illustrate the simplified rectangular concrete stress block of depth 0.8x and uniform stress of 0.85f_cd. Show the resultant concrete compressive force, Rcc, at the centroid of this block. At the reinforcement level, show the resultant tensile force, Rst, and label the steel stress as f_yd. Indicate the lever arm 'z' = ${r.z.toFixed(2)} cm between Rcc and Rst.
+The style must be a clean, black-and-white blueprint schematic with precise labels and dimension lines. No colors.`;
+
+            try {
+                const response = await fetchWithBackoff(prompt);
+                const result = await response.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                if (base64Data) {
+                    stressImage.src = `data:image/png;base64,${base64Data}`;
+                } else {
+                    throw new Error("Não foi possível gerar o diagrama de tensões. Resposta da API inválida.");
+                }
+            } catch (error) {
+                console.error("Stress diagram generation error:", error);
+                stressImage.src = `https://placehold.co/400x250/fecaca/991b1b?text=Erro+ao+gerar+diagrama`;
+                 showError("Ocorreu um erro ao gerar o diagrama de tensões.");
+            } finally {
+                 stressLoader.classList.add('hidden');
+                 stressImage.classList.remove('hidden');
+            }
+        }
+
+        async function fetchWithBackoff(prompt, maxRetries = 3) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+            };
+            
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        return response;
+                    }
+                    if (response.status === 429 || response.status >= 500) {
+                        // Throttling or server error, wait and retry
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Exponential backoff
+                    } else {
+                       // Other client-side error, don't retry
+                       throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+             throw new Error("Falha na geração da imagem após múltiplas tentativas.");
+        }
+
+
+        function clearResults() {
+            partialResultsDiv.innerHTML = '';
+            memorialOutput.innerText = 'Aguardando cálculo...';
+            errorMessageDiv.classList.add('hidden');
+            errorMessageDiv.innerText = '';
+            beamImage.src = 'https://placehold.co/400x300/e2e8f0/64748b?text=Aguardando+Cálculo';
+            stressImage.src = 'https://placehold.co/400x300/e2e8f0/64748b?text=Aguardando+Cálculo';
+        }
+
+        function showError(message) {
+            errorMessageDiv.innerText = message;
+            errorMessageDiv.classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>
+
